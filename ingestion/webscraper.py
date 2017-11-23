@@ -21,6 +21,12 @@ class WebScraper(object):
                 raise Exception('Failed to get data from %s'%url, )
 
     @staticmethod
+    def get_underlying_equity():
+        url = 'http://hq.sinajs.cn/list=sh510050'
+        content = WebScraper.http_get_with_retry(url)
+        return content
+
+    @staticmethod
     def get_contract():
         url = 'http://stock.finance.sina.com.cn/futures/api/openapi.php/StockOptionService.getStockName'
         content = WebScraper.http_get_with_retry(url)

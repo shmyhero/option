@@ -17,6 +17,27 @@ class DailyIngestor(object):
         ensure_dir_exists(self.daily_path)
         self.logger = Logger(__name__, PathMgr.get_log_path())
 
+    def gen_underlying_equity(self):
+        content = WebScraper.get_underlying_equity()
+        values = content.split(',')
+        record = []
+        if len(values) > 30:
+            if values[1] == '0.00' or values[1] == '0.000':
+                pass
+            else:
+                time = values[30].replace('-', '')
+                code = '510050'
+                open_price = values[1]
+                high = values[4]
+                low = values[5]
+                close = values[3]
+                last_close = values[2]
+                vol = values[9]
+                record = [time, code, open_price, high, low, close, last_close, vol]
+        equity_path = os.path.join(self.daily_path, 'equity.txt')
+        write_to_file(equity_path, ','.join(record))
+        return record
+
     def gen_contract_month(self):
         content = WebScraper.get_contract()
         contract_path = os.path.join(self.daily_path, 'contact.json')
@@ -46,6 +67,8 @@ class DailyIngestor(object):
         write_to_file(symbol_path, content)
 
     def process_all(self):
+        self.logger.info('ingest data for equity...')
+        self.gen_underlying_equity()
         self.logger.info('ingest data for contract month...')
         contract_month_list  = self.gen_contract_month()
         for contract_month in contract_month_list:
