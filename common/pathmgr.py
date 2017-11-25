@@ -13,6 +13,11 @@ class PathMgr(object):
         return path_dir[:path_dir.rindex(os.path.sep)]
 
     @staticmethod
+    def get_config_path():
+        project_path = PathMgr.get_project_path()
+        return os.path.join(project_path, 'config.conf')
+
+    @staticmethod
     def get_log_path(sub_path = None):
         project_path = PathMgr.get_project_path()
         if sub_path:
