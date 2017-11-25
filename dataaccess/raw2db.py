@@ -3,7 +3,7 @@ import json
 import os.path
 from utils.logger import Logger
 from utils.stringhelper import string_fetch
-from utils.iohelper import read_file_to_string, get_sub_files
+from utils.iohelper import read_file_to_string, get_sub_files, get_sub_dir_names
 from common.pathmgr import PathMgr
 from entities.equity import Equity
 from entities.option import Option
@@ -32,7 +32,6 @@ class Raw2Db(object):
         equity.volume = float(row[5])
         return equity
 
-
     def insert_historical_equity(self):
         historical_path = os.path.join(PathMgr.get_data_path(), '510050.lst')
         content = read_file_to_string(historical_path)
@@ -42,18 +41,21 @@ class Raw2Db(object):
 
     def read_equity(self):
         equity_path = os.path.join(self.daily_raw_path, 'equity.txt')
-        content = read_file_to_string(equity_path)
-        items = content.split(',')
-        equity = Equity()
-        equity.symbol = items[1]
-        equity.tradeTime = datetime.datetime.strptime(items[0], '%Y%m%d')
-        equity.openPrice = float(items[2])
-        equity.highPrice = float(items[3])
-        equity.lowPrice= float(items[4])
-        equity.lastPrice = float(items[5])
-        equity.priceChange = equity.lastPrice - float(items[6])
-        equity.volume = float(items[7])
-        return equity
+        if os.path.exists(equity_path):
+            content = read_file_to_string(equity_path)
+            items = content.split(',')
+            equity = Equity()
+            equity.symbol = items[1]
+            equity.tradeTime = datetime.datetime.strptime(items[0], '%Y%m%d')
+            equity.openPrice = round(float(items[2]), 4)
+            equity.highPrice = round(float(items[3]), 4)
+            equity.lowPrice= round(float(items[4]), 4)
+            equity.lastPrice = round(float(items[5]), 4)
+            equity.priceChange = equity.lastPrice - round(float(items[6]), 4)
+            equity.volume = round(float(items[7]), 4)
+            return equity
+        else:
+            return None
         #EquityDAO().insert([equity])
 
     def read_contracts(self):
@@ -91,27 +93,28 @@ class Raw2Db(object):
             option.tradeTime = datetime.datetime.strptime(record1[32], '%Y-%m-%d %H:%M:%S')
             option.date = datetime.datetime.strptime(record1[32][0:10], '%Y-%m-%d')
             option.daysToExpiration = (option.expirationDate - option.date).days
-            option.openPrice = float(record1[9])
-            option.lastPrice = float(record1[22])
-            option.highPrice = float(record1[39])
-            option.lowPrice = float(record1[40])
-            option.askPrice = float(record1[1])
-            option.bidPrice = float(record1[2])
-            option.strikePrice = float(record1[7])
-            option.priceChange = option.lastPrice - float(record1[8])
+            option.openPrice = round(float(record1[9]), 4)
+            option.lastPrice = round(float(record1[22]), 4)
+            option.highPrice = round(float(record1[39]), 4)
+            option.lowPrice = round(float(record1[40]), 4)
+            option.askPrice = round(float(record1[1]), 4)
+            option.bidPrice = round(float(record1[2]), 4)
+            option.strikePrice = round(float(record1[7]), 4)
+            option.priceChange = option.lastPrice - round(float(record1[8]), 4)
             option.volume = int(record1[41])
-            option.delta = float(record2[13])
-            option.gamma = float(record2[14])
-            option.theta = float(record2[15])
-            option.vega = float(record2[16])
-            option.volatility = float(record2[17])
+            option.delta = round(float(record2[13]), 4)
+            option.gamma = round(float(record2[14]), 4)
+            option.theta = round(float(record2[15]), 4)
+            option.vega = round(float(record2[16]), 4)
+            option.volatility = round(float(record2[17]), 4)
             #print record1, record2
             yield option
 
     def process_all(self):
         equity = self.read_equity()
         self.logger.info("insert equity")
-        EquityDAO().insert([equity])
+        if equity is not None:
+            EquityDAO().insert([equity])
         expiration_dic = self.read_expiration_dates()
         options = list(self.get_options(expiration_dic))
         self.logger.info("insert options")
@@ -120,5 +123,8 @@ class Raw2Db(object):
 
 if __name__ == '__main__':
     #print Raw2Db().read_contracts()
-    Raw2Db().process_all()
+    #Raw2Db(PathMgr.get_raw_data_path('2017-11-25')).process_all()
+    for raw_folder_name in get_sub_dir_names(PathMgr.get_raw_data_path()):
+        print 'process for %s'%raw_folder_name
+        Raw2Db(os.path.join(PathMgr.get_raw_data_path(), raw_folder_name)).process_all()
     #Raw2Db().insert_historical_equity()
