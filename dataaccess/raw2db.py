@@ -88,8 +88,8 @@ class Raw2Db(object):
             option.expirationDate = expiration_dic[items[1]]
             option.symbol = items[2]
             content = read_file_to_string(option_path)
-            record1 = string_fetch(content, '_CON_OP_%s=\"'% option.symbol, ',M\"').split(',')
-            record2 = string_fetch(content, '_CON_ZL_%s=\"' % option.symbol, ',M\"').split(',')
+            record1 = string_fetch(content, '_CON_OP_%s=\"'% option.symbol, '\"').split(',')
+            record2 = string_fetch(content, '_CON_ZL_%s=\"' % option.symbol, '\"').split(',')
             option.tradeTime = datetime.datetime.strptime(record1[32], '%Y-%m-%d %H:%M:%S')
             option.date = datetime.datetime.strptime(record1[32][0:10], '%Y-%m-%d')
             option.daysToExpiration = (option.expirationDate - option.date).days
