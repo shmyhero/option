@@ -71,7 +71,7 @@ class Raw2Db(object):
             content = read_file_to_string(expiration_pah)
             json_data = json.loads(content)
             expire_day = datetime.datetime.strptime(json_data['result']['data']['expireDay'], '%Y-%m-%d')
-            year_month_key = json_data['result']['data']['cateId'][7:]
+            year_month_key = expire_day.strftime('%y%m')
             dic[year_month_key] = expire_day
         return dic
 
